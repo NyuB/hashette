@@ -1,0 +1,117 @@
+
+name: CI/CD
+run-name: ${{ github.event.inputs.name }}
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+    inputs:
+      name:
+        description: 'Release name'
+        required: true
+        default: 'snapshot'
+      text:
+        description: 'Release description'
+        required: true
+        default: 'Snapshot build of the main branch'
+
+jobs:
+  jar:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: coursier/cache-action@v6
+    - uses: coursier/setup-action@v1
+      with:
+        apps: cs scala3 scalafmt
+        jvm: graalvm-java21:21.0.2
+
+    - name: Enforce formatting
+      run: scalafmt --check .
+
+    - name: Test
+      run: ./millw hashette.test + hashette.app.compile
+
+    - name: Package
+      run: ./millw hashette.app.cpJar
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: hashette.jar
+        path: hashette.jar
+        if-no-files-found: error
+        retention-days: 1
+
+  binary:
+    name: ${{ matrix.os }} native binary
+    needs: [jar]
+    # only build binaries for releases
+    if: github.event_name == 'workflow_dispatch' 
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      matrix:
+        os: [ubuntu, windows]
+        include:
+          - os: windows
+            name: windows
+          - os: ubuntu
+            name: linux
+    steps:
+      - uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '21'
+          distribution: 'graalvm'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          native-image-job-reports: 'true'
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: hashette.jar
+          path: .
+
+      - name: Build native binary from jar
+        run: native-image -jar hashette.jar hashette-${{ matrix.name }}
+      
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: hashette-${{ matrix.name }}
+          path: hashette-${{ matrix.name }}*
+          if-no-files-found: error
+          retention-days: 1
+  
+  release:
+    runs-on: ubuntu-latest
+    needs: [jar, binary]
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+    - uses: actions/download-artifact@v4
+      with:
+        name: hashette.jar
+        path: .
+
+    - uses: actions/download-artifact@v4
+      with:
+        name: hashette-linux
+        path: bin/
+
+    - uses: actions/download-artifact@v4
+      with:
+        name: hashette-windows
+        path: bin/
+
+    - name: Release
+      uses: softprops/action-gh-release@v2
+      with:
+        name: ${{ github.event.inputs.name }}
+        tag_name: ${{ github.event.inputs.name }}
+        target_commitish: main
+        body: ${{ github.event.inputs.text }}
+        token: ${{ secrets.GITHUB_TOKEN }}
+        files: |
+          hashette.jar
+          bin/hashette-linux
+          bin/hashette-windows.exe

@@ -1,0 +1,13 @@
+hashette.jar
+
+# vs code config files
+.bloop
+.metals
+.vscode
+
+# mill output files
+out
+
+
+# python artifacts
+__pycache__
