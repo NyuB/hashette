@@ -1,7 +1,17 @@
 (executable
  (public_name hashette)
  (name hashette)
- (libraries digestif unix))
+ (modules hashette)
+ (libraries filesystem hashette_lib digestif))
+
+(library
+ (name hashette_lib)
+ (modules hashette_lib)
+ (libraries filesystem digestif))
+
+(library
+ (name filesystem)
+ (modules filesystem))
 
 (cram
  (deps %{bin:hashette}))
