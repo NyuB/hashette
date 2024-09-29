@@ -12,6 +12,6 @@ File hashing utility
 
 ## Installation
 
-Run `make install` to build and copy `$hashette` to your system. Installation folder is specified with the variable `INSTALL_ROOT` (default to `~/bin`), e.g.
+Run `make install` to build and copy `hashette` to your system. Installation folder is specified with the variable `INSTALL_ROOT` (default to `~/bin`), e.g.
 
 `make install INSTALL_ROOT=/usr/custom/bin`
