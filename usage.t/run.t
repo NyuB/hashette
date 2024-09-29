@@ -34,3 +34,11 @@ Group files by hash
       resources/groups
   93d93833fd18fae952c6d42204b23c506db5725149514ad51f8d3f7ef3ad26bd
       resources/groups/folder_two
+
+Use various hasj methods
+  $ hashette hash --method=sha256 resources
+  20b831270438847a360ce6c8e8cbbc48e998ce245a06a64e1ce49275e96d22c0
+  $ hashette hash --method=sha1 resources
+  2729f50a7e30aff8d98607370eb2373d6c2dc8c4
+  $ hashette hash --method=md5 resources
+  ebd0282c666d989b31bf1384e6fa9af7

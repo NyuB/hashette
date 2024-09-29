@@ -24,31 +24,54 @@ let print_record record =
   |> Array.iter print_record_entry
 ;;
 
-let hash file =
-  let module R = Hashette_lib.Record.None (Digestif.SHA256) in
-  let module H = Hashette_lib.Make (Digestif.SHA256) (R) in
-  let h = H.hash_path () file in
-  print_endline @@ H.to_hex_lowercase h
+let hash (module H : Digestif.S) file =
+  let module R = Hashette_lib.Record.None (H) in
+  let module Hashette = Hashette_lib.Make (H) (R) in
+  let h = Hashette.hash_path () file in
+  print_endline @@ Hashette.to_hex_lowercase h
 ;;
 
-let group file =
-  let module R = Hashette_lib.Record.Make (Digestif.SHA256) in
-  let module H = Hashette_lib.Make (Digestif.SHA256) (R) in
+let group (module H : Digestif.S) file =
+  let module R = Hashette_lib.Record.Make (H) in
+  let module Hashette = Hashette_lib.Make (H) (R) in
   let record = R.create () in
-  let _ = H.hash_path record file in
+  let _ = Hashette.hash_path record file in
   print_record record
 ;;
 
+type options = { hash_method : (module Digestif.S) }
+
+let hash_method_of_arg arg : (module Digestif.S) option =
+  match arg with
+  | "--method=sha1" -> Some (module Digestif.SHA1)
+  | "--method=sha256" -> Some (module Digestif.SHA256)
+  | "--method=md5" -> Some (module Digestif.MD5)
+  | _ -> None
+;;
+
+let parse_args args =
+  let rec aux acc opts = function
+    | [] -> List.rev acc |> Array.of_list, opts
+    | arg :: t when String.starts_with ~prefix:"--method=" arg ->
+      (match hash_method_of_arg arg with
+       | Some hash_method -> aux acc { hash_method } t
+       | None -> aux (arg :: acc) opts t)
+    | arg :: t -> aux (arg :: acc) opts t
+  in
+  aux [] { hash_method = (module Digestif.SHA256) } (Array.to_list args)
+;;
+
 let () =
-  let command = Sys.argv.(1) in
-  let file_path = Sys.argv.(2) in
+  let args, options = parse_args Sys.argv in
+  let command = args.(1)
+  and file_path = args.(2) in
   let file =
     match Filesystem.path_as_file file_path with
     | None -> failwith @@ Printf.sprintf "File %s does not exist" file_path
     | Some f -> f
   in
   match command with
-  | "hash" -> hash file
-  | "group" -> group file
+  | "hash" -> hash options.hash_method file
+  | "group" -> group options.hash_method file
   | any -> print_endline @@ Printf.sprintf "Unknown command %s" any
 ;;
