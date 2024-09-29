@@ -56,7 +56,6 @@ end
 module Make (H : Digestif.S) (R : Record.T with type h = H.t) = struct
   type h = H.t
 
-  let _to_hex_uppercase h = String.uppercase_ascii (H.to_hex h)
   let to_hex_lowercase h = String.lowercase_ascii (H.to_hex h)
   let hash_single_file f : h = H.digest_bytes (Filesystem.read_bytes f)
   let compare_child_entries (a, _) (b, _) = String.compare a b

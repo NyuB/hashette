@@ -50,9 +50,6 @@ module Make : functor
     -> sig
   type h = H.t
 
-  val _to_hex_uppercase : H.t -> string
   val to_hex_lowercase : H.t -> string
-  val hash_single_file : Filesystem.file -> h
-  val compare_child_entries : string * 'a -> string * 'b -> int
   val hash_path : R.t -> Filesystem.t -> h
 end
