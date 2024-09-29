@@ -1,5 +1,7 @@
 # hashette
 
+![ci-status](https://github.com/NyuB/hashette/actions/workflows/ci.yml/badge.svg?event=push&branch=main)
+
 File hashing utility
 
 ## Development
