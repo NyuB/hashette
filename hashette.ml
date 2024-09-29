@@ -43,9 +43,12 @@ type options = { hash_method : (module Digestif.S) }
 
 let hash_method_of_arg arg : (module Digestif.S) option =
   match arg with
+  | "--method=blake2b" -> Some (module Digestif.BLAKE2B)
+  | "--method=blake2s" -> Some (module Digestif.BLAKE2S)
+  | "--method=md5" -> Some (module Digestif.MD5)
   | "--method=sha1" -> Some (module Digestif.SHA1)
   | "--method=sha256" -> Some (module Digestif.SHA256)
-  | "--method=md5" -> Some (module Digestif.MD5)
+  | "--method=sha512" -> Some (module Digestif.SHA512)
   | _ -> None
 ;;
 
