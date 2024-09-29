@@ -1,0 +1,7 @@
+(executable
+ (public_name hashette)
+ (name hashette)
+ (libraries digestif unix))
+
+(cram
+ (deps %{bin:hashette}))
