@@ -9,9 +9,10 @@ homepage: "https://github.com/NyuB/hashette"
 doc: "https://github.com/NyuB/hashette"
 bug-reports: "https://github.com/NyuB/hashette/issues"
 depends: [
-  "ocaml"
+  "ocaml" {>= "5.1.1"}
   "dune" {>= "3.16"}
   "digestif"
+  "ocamlformat" {with-test}
   "odoc" {with-doc}
 ]
 build: [

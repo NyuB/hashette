@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  # Triggers the workflow on push or pull request events
+  push:
+    branches: [ "*" ]
+  pull_request:
+    branches: [ "main" ]
+
+  # Manual trigger for release
+  workflow_dispatch:
+    inputs:
+      name:
+        description: 'Release name'
+        required: true
+        default: 'snapshot'
+      text:
+        description: 'Release description'
+        required: true
+        default: 'Snapshot build of the main branch'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install opam
+        run: |
+          sudo apt install -y opam
+          opam init -y --shell-setup
+          eval $(opam env)
+          opam switch create -y --with-test .
+          
+      - name: Tests
+        run: |
+          eval $(opam env --set-switch)
+          make test
+      
+      - name: Build executable
+        run: |
+          eval $(opam env --set-switch)
+          make install INSTALL_ROOT=.
+
+      - name: Release
+        # Only if manuallt triggered
+        if: github.event_name == 'workflow_dispatch'
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ github.event.inputs.name }}
+          tag_name: ${{ github.event.inputs.name }}
+          target_commitish: main
+          body: ${{ github.event.inputs.text }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          files: |
+            hashette
