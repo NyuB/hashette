@@ -46,8 +46,8 @@ let file_or_dir_arg_type =
     | None -> failwith "Not an existing file")
 ;;
 
-let hash_method_arg_type =
-  let method_to_modules : (string * (module Digestif.S)) list =
+let hash_algorithm_arg_type =
+  let algorithm_to_module : (string * (module Digestif.S)) list =
     [ "blake2b", (module Digestif.BLAKE2B)
     ; "blake2s", (module Digestif.BLAKE2S)
     ; "md5", (module Digestif.MD5)
@@ -56,19 +56,19 @@ let hash_method_arg_type =
     ; "sha512", (module Digestif.SHA512)
     ]
   in
-  Core.Command.Arg_type.of_alist_exn method_to_modules
+  Core.Command.Arg_type.of_alist_exn algorithm_to_module
 ;;
 
 let flag = Core.Command.Param.flag ~full_flag_required:()
 
-let method_param =
+let algorithm_param =
   flag
-    "--method"
-    ~aliases:[ "-m" ]
+    "--algorithm"
+    ~aliases:[ "-a" ]
     ~doc:"algorithm Hash algorithm to use"
     (Core.Command.Param.optional_with_default
        (module Digestif.SHA256 : Digestif.S)
-       hash_method_arg_type)
+       hash_algorithm_arg_type)
 ;;
 
 let filename_param =
@@ -90,9 +90,9 @@ let hash_command =
       "If FILENAME is a folder, the hash will recursively include its children' names \
        and content hashes.")
     (let open Command_Let_Syntax in
-     let+ hash_method = method_param
+     let+ hash_algorithm = algorithm_param
      and+ file = filename_param in
-     fun () -> hash hash_method file)
+     fun () -> hash hash_algorithm file)
 ;;
 
 let group_command =
@@ -103,9 +103,9 @@ let group_command =
        list of file sharing this hash. Entries are sorted by number of files sharing the \
        entry's hash.")
     (let open Command_Let_Syntax in
-     let+ hash_method = method_param
+     let+ algorithm = algorithm_param
      and+ file = filename_param in
-     fun () -> group hash_method file)
+     fun () -> group algorithm file)
 ;;
 
 let hashette =
