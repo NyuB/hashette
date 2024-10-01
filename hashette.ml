@@ -59,10 +59,6 @@ let hash_method_arg_type =
   Core.Command.Arg_type.of_alist_exn method_to_modules
 ;;
 
-let sub_command_arg_type =
-  Core.Command.Arg_type.of_alist_exn @@ List.map (fun a -> a, a) [ "hash"; "group" ]
-;;
-
 let flag = Core.Command.Param.flag ~full_flag_required:()
 
 let method_param =
@@ -80,11 +76,6 @@ let filename_param =
   anon ("filename" %: file_or_dir_arg_type)
 ;;
 
-let sub_command_param =
-  let open Core.Command.Param in
-  anon ("sub-command" %: sub_command_arg_type)
-;;
-
 module Command_Let_Syntax = struct
   include Core.Command.Let_syntax
 
@@ -92,28 +83,35 @@ module Command_Let_Syntax = struct
   let ( and+ ) a b = Core.Command.Param.map2 a b ~f:(fun a b -> a, b)
 end
 
-let hashette =
-  let open Command_Let_Syntax in
-  let+ hash_method = method_param
-  and+ command = sub_command_param
-  and+ file = filename_param in
-  fun () ->
-    match command with
-    | "hash" -> hash hash_method file
-    | "group" -> group hash_method file
-    | any -> print_endline @@ Printf.sprintf "Unknown command %s" any
+let hash_command =
+  Core.Command.basic
+    ~summary:"Hash a single file or folder"
+    ~readme:(fun () ->
+      "If FILENAME is a folder, the hash will recursively include its children' names \
+       and content hashes.")
+    (let open Command_Let_Syntax in
+     let+ hash_method = method_param
+     and+ file = filename_param in
+     fun () -> hash hash_method file)
 ;;
 
-let () =
-  let command =
-    let open Core in
-    Command.basic
-      ~summary:"Hash files or folders"
-      ~readme:(fun () ->
-        "SUB-COMMAND:\n\
-         \thash: hash a single file or folder\n\
-         \tgroup: group files or folders having the same hash")
-      hashette
-  in
-  Command_unix.run ~version:"0.0.2" command
+let group_command =
+  Core.Command.basic
+    ~summary:"Group files and folders by hash"
+    ~readme:(fun () ->
+      "Intended to detect duplicated resources, prints a list of hashes followed by a \
+       list of file sharing this hash. Entries are sorted by number of files sharing the \
+       entry's hash.")
+    (let open Command_Let_Syntax in
+     let+ hash_method = method_param
+     and+ file = filename_param in
+     fun () -> group hash_method file)
 ;;
+
+let hashette =
+  Command.group
+    ~summary:"File hashing utility"
+    [ "hash", hash_command; "group", group_command ]
+;;
+
+let () = Command_unix.run ~version:"0.0.2" hashette

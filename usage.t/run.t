@@ -1,35 +1,42 @@
 Help summary
   $ hashette --help
-  Hash files or folders
+  File hashing utility
   
-    hashette SUB-COMMAND FILENAME
+    hashette SUBCOMMAND
   
-  SUB-COMMAND:
-  	hash: hash a single file or folder
-  	group: group files or folders having the same hash
+  === subcommands ===
+  
+    group                      . Group files and folders by hash
+    hash                       . Hash a single file or folder
+    version                    . print version information
+    help                       . explain a given subcommand (perhaps recursively)
+  
+  $ hashette help hash
+  Hash a single file or folder
+  
+    hashette hash FILENAME
+  
+  If FILENAME is a folder, the hash will recursively include its children' names and content hashes.
   
   === flags ===
   
     [--method algorithm], -m   . Hash algorithm to use (can be: blake2b, blake2s,
                                  md5, sha1, sha256, sha512)
-    [-build-info]              . print info about this build and exit
-    [-version]                 . print the version of this build and exit
     [-help], -?                . print this help text and exit
   
-
-Sub commands
-
-  $ hashette nothing a.txt
-  Error parsing command line:
+  $ hashette help group
+  Group files and folders by hash
   
-    failed to parse SUB-COMMAND value "nothing"
-    (Failure "valid arguments: {group,hash}")
+    hashette group FILENAME
   
-  For usage information, run
+  Intended to detect duplicated resources, prints a list of hashes followed by a list of file sharing this hash. Entries are sorted by number of files sharing the entry's hash.
   
-    hashette -help
+  === flags ===
   
-  [1]
+    [--method algorithm], -m   . Hash algorithm to use (can be: blake2b, blake2s,
+                                 md5, sha1, sha256, sha512)
+    [-help], -?                . print this help text and exit
+  
 
 Single file
   $ hashette hash resources/a.txt
@@ -44,7 +51,7 @@ Missing file
   
   For usage information, run
   
-    hashette -help
+    hashette hash -help
   
   [1]
 
