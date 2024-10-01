@@ -11,16 +11,24 @@ let size_desc_then_string (ha, sa) (hb, sb) =
   if ic = 0 then String.compare ha hb else ic
 ;;
 
+let size_asc_then_string (ha, sa) (hb, sb) =
+  let ic = Int.compare (StringSet.cardinal sa) (StringSet.cardinal sb) in
+  if ic = 0 then String.compare ha hb else ic
+;;
+
+let hash_asc (ha, _) (hb, _) = String.compare ha hb
+let hash_desc (ha, _) (hb, _) = String.compare hb ha
+
 let sorted_in_place by arr =
   let () = Array.sort by arr in
   arr
 ;;
 
-let print_record record =
+let print_record sort_by record =
   record
   |> StringMap.to_seq
   |> Array.of_seq
-  |> sorted_in_place size_desc_then_string
+  |> sorted_in_place sort_by
   |> Array.iter print_record_entry
 ;;
 
@@ -43,12 +51,12 @@ let hash (module H : Digestif.S) (each : bool) file =
   if not each then print_endline @@ Hashette.to_hex_lowercase h
 ;;
 
-let group (module H : Digestif.S) file =
+let group (module H : Digestif.S) sort_by file =
   let module R = Hashette_lib.Record.Make (H) in
   let module Hashette = Hashette_lib.Make (H) (R) in
   let record = R.create () in
   let _ = Hashette.hash_path record file in
-  print_record record
+  print_record sort_by record
 ;;
 
 let file_or_dir_arg_type =
@@ -69,6 +77,15 @@ let hash_algorithm_arg_type =
     ]
   in
   Core.Command.Arg_type.of_alist_exn algorithm_to_module
+;;
+
+let sort_arg_type =
+  Core.Command.Arg_type.of_alist_exn
+    [ "count_asc", size_asc_then_string
+    ; "count_desc", size_desc_then_string
+    ; "hash_asc", hash_asc
+    ; "hash_desc", hash_desc
+    ]
 ;;
 
 let flag = Core.Command.Param.flag ~full_flag_required:()
@@ -94,6 +111,16 @@ let each_param =
 let filename_param =
   let open Core.Command.Param in
   anon ("filename" %: file_or_dir_arg_type)
+;;
+
+let sort_param =
+  flag
+    "--sort-by"
+    ~aliases:[ "-s" ]
+    ~doc:
+      "sort_order the order in which to print each hash->files entry. By default, prints \
+       the entry with more files first."
+    (Core.Command.Param.optional_with_default size_desc_then_string sort_arg_type)
 ;;
 
 module Command_Let_Syntax = struct
@@ -125,8 +152,9 @@ let group_command =
        entry's hash.")
     (let open Command_Let_Syntax in
      let+ algorithm = algorithm_param
+     and+ sort = sort_param
      and+ file = filename_param in
-     fun () -> group algorithm file)
+     fun () -> group algorithm sort file)
 ;;
 
 let hashette =

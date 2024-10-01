@@ -39,6 +39,10 @@ Help summary
     [--algorithm algorithm], -a
                                . Hash algorithm to use (can be: blake2b, blake2s,
                                  md5, sha1, sha256, sha512)
+    [--sort-by sort_order], -s . the order in which to print each hash->files
+                                 entry. By default, prints the entry with more
+                                 files first. (can be: count_asc, count_desc,
+                                 hash_asc, hash_desc)
     [-help], -?                . print this help text and exit
   
 
@@ -98,6 +102,36 @@ Group files by hash
       resources/groups
   93d93833fd18fae952c6d42204b23c506db5725149514ad51f8d3f7ef3ad26bd
       resources/groups/folder_two
+
+Group entries display order can be chosen
+  $ hashette group --sort-by count_asc resources/groups
+  5436b40aaaf4b4b54633058af3108ca481562764ec548c95627f032998451067
+      resources/groups
+  93d93833fd18fae952c6d42204b23c506db5725149514ad51f8d3f7ef3ad26bd
+      resources/groups/folder_two
+  ce2ccf9dfaab921b0648f70777ed22303c0071598bd0052d24b9292d636ad203
+      resources/groups/folder_one
+      resources/groups/folder_three
+  cb1ad2119d8fafb69566510ee712661f9f14b83385006ef92aec47f523a38358
+      resources/groups/a.txt
+      resources/groups/b_with_a.txt
+      resources/groups/folder_one/a.txt
+      resources/groups/folder_three/a.txt
+      resources/groups/folder_two/b_with_a.txt
+  $ hashette group --sort-by hash_desc resources/groups
+  ce2ccf9dfaab921b0648f70777ed22303c0071598bd0052d24b9292d636ad203
+      resources/groups/folder_one
+      resources/groups/folder_three
+  cb1ad2119d8fafb69566510ee712661f9f14b83385006ef92aec47f523a38358
+      resources/groups/a.txt
+      resources/groups/b_with_a.txt
+      resources/groups/folder_one/a.txt
+      resources/groups/folder_three/a.txt
+      resources/groups/folder_two/b_with_a.txt
+  93d93833fd18fae952c6d42204b23c506db5725149514ad51f8d3f7ef3ad26bd
+      resources/groups/folder_two
+  5436b40aaaf4b4b54633058af3108ca481562764ec548c95627f032998451067
+      resources/groups
 
 Use various hash algorithms
   $ hashette hash --algorithm blake2b resources
