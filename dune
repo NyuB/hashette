@@ -2,7 +2,7 @@
  (public_name hashette)
  (name hashette)
  (modules hashette)
- (libraries filesystem hashette_lib digestif))
+ (libraries core core_unix.command_unix filesystem hashette_lib digestif))
 
 (library
  (name hashette_lib)

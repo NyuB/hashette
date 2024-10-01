@@ -1,11 +1,52 @@
+Help summary
+  $ hashette --help
+  Hash files or folders
+  
+    hashette SUB-COMMAND FILENAME
+  
+  SUB-COMMAND:
+  	hash: hash a single file or folder
+  	group: group files or folders having the same hash
+  
+  === flags ===
+  
+    [--method algorithm], -m   . Hash algorithm to use (can be: blake2b, blake2s,
+                                 md5, sha1, sha256, sha512)
+    [-build-info]              . print info about this build and exit
+    [-version]                 . print the version of this build and exit
+    [-help], -?                . print this help text and exit
+  
+
+Sub commands
+
+  $ hashette nothing a.txt
+  Error parsing command line:
+  
+    failed to parse SUB-COMMAND value "nothing"
+    (Failure "valid arguments: {group,hash}")
+  
+  For usage information, run
+  
+    hashette -help
+  
+  [1]
+
 Single file
   $ hashette hash resources/a.txt
   cb1ad2119d8fafb69566510ee712661f9f14b83385006ef92aec47f523a38358
 
 Missing file
   $ hashette hash absent.txt
-  Fatal error: exception Failure("File absent.txt does not exist")
-  [2]
+  Error parsing command line:
+  
+    failed to parse FILENAME value "absent.txt"
+    (Failure "Not an existing file")
+  
+  For usage information, run
+  
+    hashette -help
+  
+  [1]
 
 Folders with the same contents have the same hash
   $ hashette hash resources/folder_a
@@ -36,15 +77,15 @@ Group files by hash
       resources/groups/folder_two
 
 Use various hash methods
-  $ hashette hash --method=blake2b resources
+  $ hashette hash --method blake2b resources
   a4d1449a6f3e844a87647543d250e776fae6a03c2a29a8f90392ef72b2433f3deff06daeb06b078e0b5d91cbf80b46852526efac5755afb45bb3026ddff840cb
-  $ hashette hash --method=blake2s resources
+  $ hashette hash --method blake2s resources
   5d11f32b3579999be734f9416a31a7a8fbf76e9b9148fc9aca8e2c5b9d5b2967
-  $ hashette hash --method=md5 resources
+  $ hashette hash --method md5 resources
   ebd0282c666d989b31bf1384e6fa9af7
-  $ hashette hash --method=sha1 resources
+  $ hashette hash --method sha1 resources
   2729f50a7e30aff8d98607370eb2373d6c2dc8c4
-  $ hashette hash --method=sha256 resources
+  $ hashette hash --method sha256 resources
   20b831270438847a360ce6c8e8cbbc48e998ce245a06a64e1ce49275e96d22c0
-  $ hashette hash --method=sha512 resources
+  $ hashette hash --method sha512 resources
   ef2671413955bcf8f7f871291bbddeaddbdba1d86a40215de674b5c67ef2424ebd1390e4a429d0e9d401cbeb3c1a8964b800324ea18505c300cb26d6daa314d0

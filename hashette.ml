@@ -39,42 +39,81 @@ let group (module H : Digestif.S) file =
   print_record record
 ;;
 
-type options = { hash_method : (module Digestif.S) }
-
-let hash_method_of_arg arg : (module Digestif.S) option =
-  match arg with
-  | "--method=blake2b" -> Some (module Digestif.BLAKE2B)
-  | "--method=blake2s" -> Some (module Digestif.BLAKE2S)
-  | "--method=md5" -> Some (module Digestif.MD5)
-  | "--method=sha1" -> Some (module Digestif.SHA1)
-  | "--method=sha256" -> Some (module Digestif.SHA256)
-  | "--method=sha512" -> Some (module Digestif.SHA512)
-  | _ -> None
+let file_or_dir_arg_type =
+  Core.Command.Arg_type.create (fun f ->
+    match Filesystem.path_as_file f with
+    | Some f -> f
+    | None -> failwith "Not an existing file")
 ;;
 
-let parse_args args =
-  let rec aux acc opts = function
-    | [] -> List.rev acc |> Array.of_list, opts
-    | arg :: t when String.starts_with ~prefix:"--method=" arg ->
-      (match hash_method_of_arg arg with
-       | Some hash_method -> aux acc { hash_method } t
-       | None -> aux (arg :: acc) opts t)
-    | arg :: t -> aux (arg :: acc) opts t
+let hash_method_arg_type =
+  let method_to_modules : (string * (module Digestif.S)) list =
+    [ "blake2b", (module Digestif.BLAKE2B)
+    ; "blake2s", (module Digestif.BLAKE2S)
+    ; "md5", (module Digestif.MD5)
+    ; "sha1", (module Digestif.SHA1)
+    ; "sha256", (module Digestif.SHA256)
+    ; "sha512", (module Digestif.SHA512)
+    ]
   in
-  aux [] { hash_method = (module Digestif.SHA256) } (Array.to_list args)
+  Core.Command.Arg_type.of_alist_exn method_to_modules
+;;
+
+let sub_command_arg_type =
+  Core.Command.Arg_type.of_alist_exn @@ List.map (fun a -> a, a) [ "hash"; "group" ]
+;;
+
+let flag = Core.Command.Param.flag ~full_flag_required:()
+
+let method_param =
+  flag
+    "--method"
+    ~aliases:[ "-m" ]
+    ~doc:"algorithm Hash algorithm to use"
+    (Core.Command.Param.optional_with_default
+       (module Digestif.SHA256 : Digestif.S)
+       hash_method_arg_type)
+;;
+
+let filename_param =
+  let open Core.Command.Param in
+  anon ("filename" %: file_or_dir_arg_type)
+;;
+
+let sub_command_param =
+  let open Core.Command.Param in
+  anon ("sub-command" %: sub_command_arg_type)
+;;
+
+module Command_Let_Syntax = struct
+  include Core.Command.Let_syntax
+
+  let ( let+ ) t f = t >>| f
+  let ( and+ ) a b = Core.Command.Param.map2 a b ~f:(fun a b -> a, b)
+end
+
+let hashette =
+  let open Command_Let_Syntax in
+  let+ hash_method = method_param
+  and+ command = sub_command_param
+  and+ file = filename_param in
+  fun () ->
+    match command with
+    | "hash" -> hash hash_method file
+    | "group" -> group hash_method file
+    | any -> print_endline @@ Printf.sprintf "Unknown command %s" any
 ;;
 
 let () =
-  let args, options = parse_args Sys.argv in
-  let command = args.(1)
-  and file_path = args.(2) in
-  let file =
-    match Filesystem.path_as_file file_path with
-    | None -> failwith @@ Printf.sprintf "File %s does not exist" file_path
-    | Some f -> f
+  let command =
+    let open Core in
+    Command.basic
+      ~summary:"Hash files or folders"
+      ~readme:(fun () ->
+        "SUB-COMMAND:\n\
+         \thash: hash a single file or folder\n\
+         \tgroup: group files or folders having the same hash")
+      hashette
   in
-  match command with
-  | "hash" -> hash options.hash_method file
-  | "group" -> group options.hash_method file
-  | any -> print_endline @@ Printf.sprintf "Unknown command %s" any
+  Command_unix.run ~version:"0.0.2" command
 ;;
