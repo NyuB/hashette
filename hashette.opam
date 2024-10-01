@@ -10,8 +10,10 @@ doc: "https://github.com/NyuB/hashette"
 bug-reports: "https://github.com/NyuB/hashette/issues"
 depends: [
   "ocaml" {>= "5.1.1"}
-  "dune" {>= "3.16"}
+  "core"
+  "core_unix"
   "digestif"
+  "dune" {>= "3.16"}
   "ocamlformat" {with-test}
   "odoc" {with-doc}
 ]

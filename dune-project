@@ -19,7 +19,7 @@
  (name hashette)
  (synopsis "File hashing utility")
  (description "File hashing utility")
- (depends (ocaml (>= 5.1.1)) dune digestif (ocamlformat :with-test))
+ (depends (ocaml (>= 5.1.1)) core core_unix digestif dune (ocamlformat :with-test))
  (tags ()))
 
 ; See the complete stanza docs at https://dune.readthedocs.io/en/stable/reference/dune-project/index.html
