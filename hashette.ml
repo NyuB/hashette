@@ -24,11 +24,23 @@ let print_record record =
   |> Array.iter print_record_entry
 ;;
 
-let hash (module H : Digestif.S) file =
-  let module R = Hashette_lib.Record.None (H) in
+module Print_Each (H : Digestif.S) :
+  Hashette_lib.Record.T with type t = unit and type h = H.t = struct
+  type t = unit
+  type h = H.t
+
+  let record () h f = print_endline @@ Printf.sprintf "%s %s" f (H.to_hex h)
+  let create () = ()
+end
+
+let hash (module H : Digestif.S) (each : bool) file =
+  let module R =
+    (val (if each then (module Print_Each (H)) else (module Hashette_lib.Record.None (H))
+          : (module Hashette_lib.Record.T with type t = unit and type h = H.t)))
+  in
   let module Hashette = Hashette_lib.Make (H) (R) in
   let h = Hashette.hash_path () file in
-  print_endline @@ Hashette.to_hex_lowercase h
+  if not each then print_endline @@ Hashette.to_hex_lowercase h
 ;;
 
 let group (module H : Digestif.S) file =
@@ -71,6 +83,14 @@ let algorithm_param =
        hash_algorithm_arg_type)
 ;;
 
+let each_param =
+  flag
+    "--each"
+    ~aliases:[ "-e" ]
+    Core.Command.Flag.no_arg
+    ~doc:"When hashing a folder, also print each of its children hash"
+;;
+
 let filename_param =
   let open Core.Command.Param in
   anon ("filename" %: file_or_dir_arg_type)
@@ -91,8 +111,9 @@ let hash_command =
        and content hashes.")
     (let open Command_Let_Syntax in
      let+ hash_algorithm = algorithm_param
+     and+ each = each_param
      and+ file = filename_param in
-     fun () -> hash hash_algorithm file)
+     fun () -> hash hash_algorithm each file)
 ;;
 
 let group_command =
