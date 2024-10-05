@@ -27,13 +27,14 @@ let children dir =
 ;;
 
 let read_bytes (file : file) =
+  let chunk_size = 8192 in
   let ic = open_in_bin file in
   try
-    let buffer = Bytes.make 255 '\000' in
+    let buffer = Bytes.make chunk_size '\000' in
     let res = ref Bytes.empty in
     let over = ref false in
     while not !over do
-      let read = input ic buffer 0 255 in
+      let read = input ic buffer 0 chunk_size in
       res := Bytes.cat !res @@ Bytes.sub buffer 0 read;
       if read = 0 then over := true
     done;
