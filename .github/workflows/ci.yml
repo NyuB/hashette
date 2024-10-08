@@ -18,7 +18,7 @@ on:
       text:
         description: 'Release description'
         required: true
-        default: 'Snapshot build of the main branch'
+        default: 'Snapshot release of the main branch'
 
 jobs:
   build:
@@ -26,25 +26,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install opam
-        run: |
-          sudo apt install -y opam
-          opam init -y --shell-setup
-          eval $(opam env)
-          opam switch create -y --with-test .
+      - name: Set-up OCaml
+        uses: ocaml/setup-ocaml@v3
+        with:
+          ocaml-compiler: 5.2
+
+      - run: opam install . --deps-only --with-test
           
       - name: Tests
         run: |
-          eval $(opam env --set-switch)
-          make test
+          opam exec -- make test
       
       - name: Build executable
         run: |
-          eval $(opam env --set-switch)
-          make install INSTALL_ROOT=.
+          opam exec -- make install INSTALL_ROOT=.
 
       - name: Release
-        # Only if manuallt triggered
+        # Only if manually triggered
         if: github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v2
         with:
